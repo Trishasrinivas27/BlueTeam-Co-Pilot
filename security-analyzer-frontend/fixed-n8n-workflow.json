@@ -1,0 +1,261 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        464,
+        240
+      ],
+      "id": "53e6b193-0d98-4f87-8463-14e7cdf71c88",
+      "name": "Embeddings Mistral Cloud1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MT539E4R9hsBAQHq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo1",
+          "mode": "list",
+          "cachedResultName": "demo1"
+        },
+        "options": {
+          "pineconeNamespace": "demo1"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        32
+      ],
+      "id": "e3e95258-fbee-449d-9a7f-41c63895bf37",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "g1BVRKdeEPCoP1ZD",
+          "name": "PineconeApi account"
+        }
+      },
+      "notes": "If the user asks about \"nid\", check the text and return the MITRE ATT&CK technique ID (the value after 'nid:'). \nExample: For Group Policy Discovery, the nid is T1615.\n"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "9bbca7af-cb3b-4f43-b35d-6776ee60a7fb",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MT539E4R9hsBAQHq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a JSON object based on the provided security event. The JSON must strictly adhere to the following structure.\n\n{\n\"threat_score\": <number>,\n\"cause\": \"<string>\",\n\"remedy\": \"<string>\",\n\"mitre_att&ck_url\": \"<string>\",\n\"mitre_technique\": \"<string>\",\n\"approach\": <array of strings>\n}\n\n**Security Event Data (Raw Input):**\n{{ $json.query.log }}\n\n**Instructions:**\n1.  Extract and clean the values for each key from the \"Raw Input\".\n2.  Clean the \"mitre att&ck url\" field by removing the HTML anchor tag (`<a>`) and extracting only the URL.\n3.  Ensure the \"mitre_att&ck_url\" key is correctly named with an underscore.\n4.  Split the \"approach\" string by commas to create a JSON array of strings.\n5.  Output only the final, correctly formatted JSON object. Do not include any extra text, explanations, or code block fences.\nai can make mistakes, so double-check it",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -400
+      ],
+      "id": "5341d8b8-d282-44a8-8fec-604e5729f7e6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        -160
+      ],
+      "id": "86e345f2-3735-4729-a347-44c458496e21",
+      "name": "Answer questions with a vector store"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        672,
+        32
+      ],
+      "id": "0099f50e-e1cc-411d-8dd3-badfc54049ac",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "MT539E4R9hsBAQHq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "{{json.output}}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        -176
+      ],
+      "id": "0bb6d56c-7b6e-47bd-8d7a-0de2e7255c6b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "log",
+        "responseMode": "lastNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -400
+      ],
+      "id": "916ec2f5-0ff6-408e-a559-ee58ca386094",
+      "name": "Webhook",
+      "webhookId": "16f37371-a50e-4b8-a512-7f253b1e5bbd"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        32
+      ],
+      "id": "manual-trigger-id",
+      "name": "Manual Trigger"
+    }
+  ],
+  "connections": {
+    "Embeddings Mistral Cloud1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Answer questions with a vector store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer questions with a vector store",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d706f980b2d78ed53b0c795f873746d98f48e5c31ced6608b0ee45b52fc3428"
+  }
+}

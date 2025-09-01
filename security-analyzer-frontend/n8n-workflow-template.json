@@ -1,0 +1,103 @@
+{
+  "name": "Security Event Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-test/log",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "webhook-test-log"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "log_data",
+              "value": "={{ $json.body.log }}"
+            },
+            {
+              "name": "timestamp", 
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-data",
+      "name": "Extract Log Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simple AI-like analysis based on log content\nconst logData = items[0].json.log_data.toLowerCase();\n\n// Initialize analysis object\nlet analysis = {\n  threat_score: 5,\n  cause: 'General security event detected',\n  remedy: 'Monitor and investigate further',\n  mitre_technique: 'T1001 - Data Obfuscation',\n  mitre_attck_url: 'https://attack.mitre.org/techniques/T1001/',\n  approach: [\n    'Review security logs',\n    'Implement monitoring', \n    'Update security policies'\n  ]\n};\n\n// Advanced keyword-based threat analysis\nif (logData.includes('failed') && (logData.includes('login') || logData.includes('auth'))) {\n  analysis = {\n    threat_score: 8,\n    cause: 'Multiple failed authentication attempts detected - potential brute force or credential stuffing attack',\n    remedy: 'Implement account lockout policies, enable MFA, and monitor for suspicious IP addresses',\n    mitre_technique: 'T1110.001 - Password Spraying',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1110/001/',\n    approach: [\n      'Enable automatic account lockout after 3-5 failed attempts',\n      'Implement multi-factor authentication (MFA)',\n      'Monitor and block suspicious IP addresses',\n      'Review and strengthen password policies',\n      'Set up real-time alerting for authentication failures'\n    ]\n  };\n} else if (logData.includes('malware') || logData.includes('virus') || logData.includes('trojan') || logData.includes('ransomware')) {\n  analysis = {\n    threat_score: 9,\n    cause: 'Malware detected on system - immediate containment and remediation required',\n    remedy: 'Isolate affected system immediately and run comprehensive antimalware scan',\n    mitre_technique: 'T1204.002 - Malicious File',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1204/002/',\n    approach: [\n      'Immediately disconnect system from network',\n      'Run full system antimalware scan',\n      'Check for signs of lateral movement',\n      'Update antimalware signatures and definitions',\n      'Restore from clean backup if necessary'\n    ]\n  };\n} else if (logData.includes('unauthorized') || logData.includes('privilege') || logData.includes('escalation')) {\n  analysis = {\n    threat_score: 7,\n    cause: 'Unauthorized access attempt or privilege escalation detected',\n    remedy: 'Review access controls, audit user permissions, and investigate account activity',\n    mitre_technique: 'T1078 - Valid Accounts',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1078/',\n    approach: [\n      'Conduct immediate audit of user permissions',\n      'Implement principle of least privilege',\n      'Review and update access control policies',\n      'Monitor for suspicious account activity',\n      'Consider implementing privileged access management (PAM)'\n    ]\n  };\n} else if (logData.includes('network') || logData.includes('traffic') || logData.includes('connection')) {\n  analysis = {\n    threat_score: 6,\n    cause: 'Suspicious network activity detected - potential data exfiltration or C2 communication',\n    remedy: 'Monitor network traffic patterns and implement network segmentation',\n    mitre_technique: 'T1071 - Application Layer Protocol',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1071/',\n    approach: [\n      'Monitor and analyze network traffic patterns',\n      'Implement network segmentation and micro-segmentation',\n      'Review and update firewall rules',\n      'Check for signs of data exfiltration',\n      'Deploy network intrusion detection systems'\n    ]\n  };\n} else if (logData.includes('sql') || logData.includes('injection') || logData.includes('xss')) {\n  analysis = {\n    threat_score: 8,\n    cause: 'Web application attack detected - SQL injection or XSS attempt',\n    remedy: 'Update application security controls and input validation',\n    mitre_technique: 'T1190 - Exploit Public-Facing Application',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1190/',\n    approach: [\n      'Implement proper input validation and sanitization',\n      'Deploy Web Application Firewall (WAF)',\n      'Conduct application security testing',\n      'Update and patch web applications',\n      'Review database access controls'\n    ]\n  };\n} else if (logData.includes('phishing') || logData.includes('email') || logData.includes('suspicious')) {\n  analysis = {\n    threat_score: 6,\n    cause: 'Phishing attempt detected - social engineering attack vector',\n    remedy: 'Implement email security controls and user awareness training',\n    mitre_technique: 'T1566.001 - Spearphishing Attachment',\n    mitre_attck_url: 'https://attack.mitre.org/techniques/T1566/001/',\n    approach: [\n      'Deploy advanced email security solutions',\n      'Conduct user awareness and phishing training',\n      'Implement email authentication (SPF, DKIM, DMARC)',\n      'Review and update email filtering rules',\n      'Establish incident response procedures'\n    ]\n  };\n}\n\n// Add metadata\nanalysis.analyzed_log = items[0].json.log_data;\nanalysis.analysis_timestamp = items[0].json.timestamp;\nanalysis.confidence = 'High (Keyword-based analysis)';\n\nreturn [{ json: analysis }];"
+      },
+      "id": "analyze-security-event",
+      "name": "Analyze Security Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-with-analysis", 
+      "name": "Respond with Analysis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Log Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Log Data": {
+      "main": [
+        [
+          {
+            "node": "Analyze Security Event", 
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Security Event": {
+      "main": [
+        [
+          {
+            "node": "Respond with Analysis",
+            "type": "main", 
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "instanceId": "n8n-security-analyzer"
+  }
+}
